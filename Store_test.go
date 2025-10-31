@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/dracory/sb"
-	"github.com/gouniverse/utils"
+	"github.com/spf13/cast"
 	_ "modernc.org/sqlite"
 )
 
@@ -90,7 +90,7 @@ func TestStoreFileCreate(t *testing.T) {
 		SetType(TYPE_FILE).
 		SetName("test.txt").
 		SetPath(ROOT_PATH + "test.txt").
-		SetSize(utils.ToString(len([]byte("TEST")))).
+		SetSize(cast.ToString(len([]byte("TEST")))).
 		SetExtension("txt").
 		SetContents("TEST")
 
@@ -119,7 +119,7 @@ func TestStoreFileFindByID(t *testing.T) {
 		SetType(TYPE_FILE).
 		SetName("test.txt").
 		SetPath(ROOT_PATH + "test.txt").
-		SetSize(utils.ToString(len([]byte("TEST")))).
+		SetSize(cast.ToString(len([]byte("TEST")))).
 		SetExtension("txt").
 		SetContents("TEST")
 
@@ -193,7 +193,7 @@ func TestStoreFileSoftDelete(t *testing.T) {
 		SetType(TYPE_FILE).
 		SetName("test.txt").
 		SetPath(ROOT_PATH + "test.txt").
-		SetSize(utils.ToString(len([]byte("TEST")))).
+		SetSize(cast.ToString(len([]byte("TEST")))).
 		SetExtension("txt").
 		SetContents("TEST")
 
@@ -264,7 +264,7 @@ func TestStoreFileDelete(t *testing.T) {
 		SetType(TYPE_FILE).
 		SetName("test.txt").
 		SetPath(ROOT_PATH + "test.txt").
-		SetSize(utils.ToString(len([]byte("TEST")))).
+		SetSize(cast.ToString(len([]byte("TEST")))).
 		SetExtension("txt").
 		SetContents("TEST")
 
@@ -338,7 +338,7 @@ func TestStoreFolderDeleteWithSubs(t *testing.T) {
 		SetType(TYPE_FILE).
 		SetName("test.txt").
 		SetPath(dir.Path() + PATH_SEPARATOR + "test.txt").
-		SetSize(utils.ToString(len([]byte("TEST")))).
+		SetSize(cast.ToString(len([]byte("TEST")))).
 		SetExtension("txt").
 		SetContents("TEST")
 
