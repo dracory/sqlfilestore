@@ -1,7 +1,6 @@
 package sqlfilestore
 
-import "github.com/gouniverse/sb"
-
+import "github.com/dracory/sb"
 
 func (st *Store) sqlTableCreate() string {
 	sql := sb.NewBuilder(sb.DatabaseDriverName(st.db)).
