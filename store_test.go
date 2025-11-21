@@ -1,6 +1,7 @@
 package sqlfilestore
 
 import (
+	"context"
 	"database/sql"
 	"os"
 	"strings"
@@ -40,7 +41,8 @@ func TestStoreRootCreated(t *testing.T) {
 		t.Fatal("unexpected nil store")
 	}
 
-	rootDir, err := store.RecordFindByPath(ROOT_PATH, RecordQueryOptions{Columns: []string{"id", "path", "type", "name"}})
+	ctx := context.Background()
+	rootDir, err := store.RecordFindByPath(ctx, ROOT_PATH, RecordQueryOptions{Columns: []string{"id", "path", "type", "name"}})
 
 	if err != nil {
 		t.Fatal("unexpected error:", err)
@@ -85,6 +87,8 @@ func TestStoreFileCreate(t *testing.T) {
 		t.Fatal("unexpected nil store")
 	}
 
+	ctx := context.Background()
+
 	file := NewFile().
 		SetParentID(ROOT_ID).
 		SetType(TYPE_FILE).
@@ -94,7 +98,7 @@ func TestStoreFileCreate(t *testing.T) {
 		SetExtension("txt").
 		SetContents("TEST")
 
-	err = store.RecordCreate(file)
+	err = store.RecordCreate(ctx, file)
 
 	if err != nil {
 		t.Fatal("unexpected error:", err)
@@ -114,6 +118,8 @@ func TestStoreFileFindByID(t *testing.T) {
 		t.Fatal("unexpected error:", err)
 	}
 
+	ctx := context.Background()
+
 	file := NewFile().
 		SetParentID(ROOT_ID).
 		SetType(TYPE_FILE).
@@ -123,12 +129,12 @@ func TestStoreFileFindByID(t *testing.T) {
 		SetExtension("txt").
 		SetContents("TEST")
 
-	err = store.RecordCreate(file)
+	err = store.RecordCreate(ctx, file)
 	if err != nil {
 		t.Error("unexpected error:", err)
 	}
 
-	fileFound, errFind := store.RecordFindByID(file.ID(), RecordQueryOptions{})
+	fileFound, errFind := store.RecordFindByID(ctx, file.ID(), RecordQueryOptions{})
 
 	if errFind != nil {
 		t.Fatal("unexpected error:", errFind)
@@ -188,6 +194,8 @@ func TestStoreFileSoftDelete(t *testing.T) {
 		t.Fatal("unexpected nil store")
 	}
 
+	ctx := context.Background()
+
 	file := NewFile().
 		SetParentID(ROOT_ID).
 		SetType(TYPE_FILE).
@@ -197,13 +205,13 @@ func TestStoreFileSoftDelete(t *testing.T) {
 		SetExtension("txt").
 		SetContents("TEST")
 
-	err = store.RecordCreate(file)
+	err = store.RecordCreate(ctx, file)
 
 	if err != nil {
 		t.Fatal("unexpected error:", err)
 	}
 
-	err = store.RecordSoftDeleteByID(file.ID())
+	err = store.RecordSoftDeleteByID(ctx, file.ID())
 
 	if err != nil {
 		t.Fatal("unexpected error:", err)
@@ -213,7 +221,7 @@ func TestStoreFileSoftDelete(t *testing.T) {
 		t.Fatal("File MUST NOT be soft deleted")
 	}
 
-	fileFound, errFind := store.RecordFindByID(file.ID(), RecordQueryOptions{})
+	fileFound, errFind := store.RecordFindByID(ctx, file.ID(), RecordQueryOptions{})
 
 	if errFind != nil {
 		t.Fatal("unexpected error:", errFind)
@@ -223,7 +231,7 @@ func TestStoreFileSoftDelete(t *testing.T) {
 		t.Fatal("File MUST be nil")
 	}
 
-	fileFindWithDeleted, err := store.RecordList(RecordQueryOptions{
+	fileFindWithDeleted, err := store.RecordList(ctx, RecordQueryOptions{
 		ID:              file.ID(),
 		Limit:           1,
 		WithSoftDeleted: true,
@@ -259,6 +267,8 @@ func TestStoreFileDelete(t *testing.T) {
 		t.Fatal("unexpected nil store")
 	}
 
+	ctx := context.Background()
+
 	file := NewFile().
 		SetParentID(ROOT_ID).
 		SetType(TYPE_FILE).
@@ -268,19 +278,19 @@ func TestStoreFileDelete(t *testing.T) {
 		SetExtension("txt").
 		SetContents("TEST")
 
-	err = store.RecordCreate(file)
+	err = store.RecordCreate(ctx, file)
 
 	if err != nil {
 		t.Fatal("unexpected error:", err)
 	}
 
-	err = store.RecordDeleteByID(file.ID())
+	err = store.RecordDeleteByID(ctx, file.ID())
 
 	if err != nil {
 		t.Fatal("unexpected error:", err)
 	}
 
-	fileFound, errFind := store.RecordFindByID(file.ID(), RecordQueryOptions{})
+	fileFound, errFind := store.RecordFindByID(ctx, file.ID(), RecordQueryOptions{})
 
 	if errFind != nil {
 		t.Fatal("unexpected error:", errFind)
@@ -290,7 +300,7 @@ func TestStoreFileDelete(t *testing.T) {
 		t.Fatal("File MUST be nil")
 	}
 
-	fileFindWithDeleted, err := store.RecordList(RecordQueryOptions{
+	fileFindWithDeleted, err := store.RecordList(ctx, RecordQueryOptions{
 		ID:              file.ID(),
 		Limit:           1,
 		WithSoftDeleted: true,
@@ -322,12 +332,14 @@ func TestStoreFolderDeleteWithSubs(t *testing.T) {
 		t.Fatal("unexpected nil store")
 	}
 
+	ctx := context.Background()
+
 	dir := NewDirectory().
 		SetParentID(ROOT_ID).
 		SetName("testDir").
 		SetPath(ROOT_PATH + "testDir")
 
-	err = store.RecordCreate(dir)
+	err = store.RecordCreate(ctx, dir)
 
 	if err != nil {
 		t.Fatal("unexpected error:", err)
@@ -342,7 +354,7 @@ func TestStoreFolderDeleteWithSubs(t *testing.T) {
 		SetExtension("txt").
 		SetContents("TEST")
 
-	err = store.RecordCreate(file)
+	err = store.RecordCreate(ctx, file)
 
 	if err != nil {
 		t.Fatal("unexpected error:", err)
@@ -350,7 +362,7 @@ func TestStoreFolderDeleteWithSubs(t *testing.T) {
 
 	// Delete folder, must fail as it has subs
 
-	err = store.RecordDeleteByID(dir.ID())
+	err = store.RecordDeleteByID(ctx, dir.ID())
 
 	if err == nil {
 		t.Fatal("must return error as directory is not empty")
@@ -362,13 +374,13 @@ func TestStoreFolderDeleteWithSubs(t *testing.T) {
 
 	// Now delete subs, then delete directory
 
-	err = store.RecordDeleteByID(file.ID())
+	err = store.RecordDeleteByID(ctx, file.ID())
 
 	if err != nil {
 		t.Fatal("unexpected error:", err)
 	}
 
-	err = store.RecordDeleteByID(dir.ID())
+	err = store.RecordDeleteByID(ctx, dir.ID())
 
 	if err != nil {
 		t.Fatal("unexpected error:", err)

@@ -1,6 +1,7 @@
 package sqlfilestore
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"log"
@@ -8,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/doug-martin/goqu/v9"
+	"github.com/dracory/database"
 	"github.com/dracory/sb"
 	"github.com/dromara/carbon/v2"
 	"github.com/samber/lo"
@@ -24,7 +26,7 @@ type Store struct {
 }
 
 // AutoMigrate auto migrate
-func (store *Store) AutoMigrate() error {
+func (store *Store) AutoMigrate(ctx context.Context) error {
 	sql := store.sqlTableCreate()
 
 	if sql == "" {
@@ -37,7 +39,7 @@ func (store *Store) AutoMigrate() error {
 		return err
 	}
 
-	recordCount, err := store.RecordCount(RecordQueryOptions{
+	recordCount, err := store.RecordCount(ctx, RecordQueryOptions{
 		Path: ROOT_PATH,
 	})
 
@@ -55,7 +57,7 @@ func (store *Store) AutoMigrate() error {
 		SetName("root").
 		SetParentID("-1")
 
-	err = store.RecordCreate(rootDir)
+	err = store.RecordCreate(ctx, rootDir)
 
 	if err != nil {
 		return err
@@ -69,13 +71,13 @@ func (st *Store) EnableDebug(debug bool) {
 	st.debugEnabled = debug
 }
 
-func (store *Store) RecordRecalculatePath(record *Record, parentRecord *Record) error {
+func (store *Store) RecordRecalculatePath(ctx context.Context, record *Record, parentRecord *Record) error {
 	if record == nil {
 		return errors.New("record is nil")
 	}
 
 	if parentRecord == nil {
-		parentRecord, err := store.RecordFindByID(record.ParentID(), RecordQueryOptions{Columns: []string{"id", "path"}})
+		parentRecord, err := store.RecordFindByID(ctx, record.ParentID(), RecordQueryOptions{Columns: []string{"id", "path"}})
 
 		if err != nil {
 			return err
@@ -88,13 +90,13 @@ func (store *Store) RecordRecalculatePath(record *Record, parentRecord *Record) 
 
 	record.SetPath(parentRecord.Path() + PATH_SEPARATOR + record.Name())
 
-	err := store.RecordUpdate(record)
+	err := store.RecordUpdate(ctx, record)
 
 	if err != nil {
 		return err
 	}
 
-	children, err := store.RecordList(RecordQueryOptions{
+	children, err := store.RecordList(ctx, RecordQueryOptions{
 		ParentID: record.ID(),
 		Columns:  []string{"id", "path"},
 	})
@@ -104,7 +106,7 @@ func (store *Store) RecordRecalculatePath(record *Record, parentRecord *Record) 
 	}
 
 	for _, child := range children {
-		err = store.RecordRecalculatePath(&child, record)
+		err = store.RecordRecalculatePath(ctx, &child, record)
 
 		if err != nil {
 			return err
@@ -114,7 +116,7 @@ func (store *Store) RecordRecalculatePath(record *Record, parentRecord *Record) 
 	return nil
 }
 
-func (store *Store) RecordCreate(record *Record) error {
+func (store *Store) RecordCreate(ctx context.Context, record *Record) error {
 	record.SetCreatedAt(carbon.Now(carbon.UTC).ToDateTimeString(carbon.UTC))
 	record.SetUpdatedAt(carbon.Now(carbon.UTC).ToDateTimeString(carbon.UTC))
 
@@ -134,7 +136,7 @@ func (store *Store) RecordCreate(record *Record) error {
 		log.Println(sqlStr)
 	}
 
-	_, err := store.db.Exec(sqlStr, params...)
+	_, err := store.db.ExecContext(ctx, sqlStr, params...)
 
 	if err != nil {
 		return err
@@ -145,11 +147,11 @@ func (store *Store) RecordCreate(record *Record) error {
 	return nil
 }
 
-func (st *Store) RecordCount(options RecordQueryOptions) (int64, error) {
+func (st *Store) RecordCount(ctx context.Context, options RecordQueryOptions) (int64, error) {
 	options.CountOnly = true
 	q := st.recordQuery(options)
 
-	sqlStr, _, errSql := q.Limit(1).Select(goqu.COUNT(goqu.Star()).As("count")).ToSQL()
+	sqlStr, sqlParams, errSql := q.Limit(1).Select(goqu.COUNT(goqu.Star()).As("count")).ToSQL()
 
 	if errSql != nil {
 		return -1, nil
@@ -159,8 +161,7 @@ func (st *Store) RecordCount(options RecordQueryOptions) (int64, error) {
 		log.Println(sqlStr)
 	}
 
-	db := sb.NewDatabase(st.db, st.dbDriverName)
-	mapped, err := db.SelectToMapString(sqlStr)
+	mapped, err := database.SelectToMapString(database.NewQueryableContext(ctx, st.db), sqlStr, sqlParams...)
 	if err != nil {
 		return -1, err
 	}
@@ -181,20 +182,20 @@ func (st *Store) RecordCount(options RecordQueryOptions) (int64, error) {
 	return i, nil
 }
 
-func (store *Store) RecordDelete(record *Record) error {
+func (store *Store) RecordDelete(ctx context.Context, record *Record) error {
 	if record == nil {
 		return errors.New("record is nil")
 	}
 
-	return store.RecordDeleteByID(record.ID())
+	return store.RecordDeleteByID(ctx, record.ID())
 }
 
-func (store *Store) RecordDeleteByID(id string) error {
+func (store *Store) RecordDeleteByID(ctx context.Context, id string) error {
 	if id == "" {
 		return errors.New("record id is empty")
 	}
 
-	subsCount, err := store.RecordCount(RecordQueryOptions{
+	subsCount, err := store.RecordCount(ctx, RecordQueryOptions{
 		ParentID:        id,
 		CountOnly:       true,
 		WithSoftDeleted: true,
@@ -222,12 +223,12 @@ func (store *Store) RecordDeleteByID(id string) error {
 		log.Println(sqlStr)
 	}
 
-	_, err = store.db.Exec(sqlStr, params...)
+	_, err = store.db.ExecContext(ctx, sqlStr, params...)
 
 	return err
 }
 
-func (store *Store) RecordFindByPath(path string, options RecordQueryOptions) (*Record, error) {
+func (store *Store) RecordFindByPath(ctx context.Context, path string, options RecordQueryOptions) (*Record, error) {
 	if path == "" {
 		return nil, errors.New("record path is empty")
 	}
@@ -237,7 +238,7 @@ func (store *Store) RecordFindByPath(path string, options RecordQueryOptions) (*
 	options.Path = path
 	options.Limit = 1
 
-	list, err := store.RecordList(options)
+	list, err := store.RecordList(ctx, options)
 
 	if err != nil {
 		return nil, err
@@ -250,7 +251,7 @@ func (store *Store) RecordFindByPath(path string, options RecordQueryOptions) (*
 	return nil, nil
 }
 
-func (store *Store) RecordFindByID(id string, options RecordQueryOptions) (*Record, error) {
+func (store *Store) RecordFindByID(ctx context.Context, id string, options RecordQueryOptions) (*Record, error) {
 	if id == "" {
 		return nil, errors.New("record id is empty")
 	}
@@ -258,7 +259,7 @@ func (store *Store) RecordFindByID(id string, options RecordQueryOptions) (*Reco
 	options.ID = id
 	options.Limit = 1
 
-	list, err := store.RecordList(options)
+	list, err := store.RecordList(ctx, options)
 
 	if err != nil {
 		return nil, err
@@ -271,7 +272,7 @@ func (store *Store) RecordFindByID(id string, options RecordQueryOptions) (*Reco
 	return nil, nil
 }
 
-func (store *Store) RecordList(options RecordQueryOptions) ([]Record, error) {
+func (store *Store) RecordList(ctx context.Context, options RecordQueryOptions) ([]Record, error) {
 	q := store.recordQuery(options)
 
 	if len(options.Columns) > 0 {
@@ -295,8 +296,7 @@ func (store *Store) RecordList(options RecordQueryOptions) ([]Record, error) {
 		log.Println(sqlStr)
 	}
 
-	db := sb.NewDatabase(store.db, store.dbDriverName)
-	modelMaps, err := db.SelectToMapString(sqlStr)
+	modelMaps, err := database.SelectToMapString(database.NewQueryableContext(ctx, store.db), sqlStr)
 	if err != nil {
 		return []Record{}, err
 	}
@@ -311,27 +311,27 @@ func (store *Store) RecordList(options RecordQueryOptions) ([]Record, error) {
 	return list, nil
 }
 
-func (store *Store) RecordSoftDelete(record *Record) error {
+func (store *Store) RecordSoftDelete(ctx context.Context, record *Record) error {
 	if record == nil {
 		return errors.New("record is nil")
 	}
 
 	record.SetDeletedAt(carbon.Now(carbon.UTC).ToDateTimeString(carbon.UTC))
 
-	return store.RecordUpdate(record)
+	return store.RecordUpdate(ctx, record)
 }
 
-func (store *Store) RecordSoftDeleteByID(id string) error {
-	record, err := store.RecordFindByID(id, RecordQueryOptions{Columns: []string{"id", "deleted_at"}})
+func (store *Store) RecordSoftDeleteByID(ctx context.Context, id string) error {
+	record, err := store.RecordFindByID(ctx, id, RecordQueryOptions{Columns: []string{"id", "deleted_at"}})
 
 	if err != nil {
 		return err
 	}
 
-	return store.RecordSoftDelete(record)
+	return store.RecordSoftDelete(ctx, record)
 }
 
-func (store *Store) RecordUpdate(record *Record) error {
+func (store *Store) RecordUpdate(ctx context.Context, record *Record) error {
 	if record == nil {
 		return errors.New("record is nil")
 	}
@@ -361,7 +361,7 @@ func (store *Store) RecordUpdate(record *Record) error {
 		log.Println(sqlStr)
 	}
 
-	_, err := store.db.Exec(sqlStr, params...)
+	_, err := store.db.ExecContext(ctx, sqlStr, params...)
 
 	record.MarkAsNotDirty()
 
