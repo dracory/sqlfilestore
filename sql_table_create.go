@@ -2,8 +2,8 @@ package sqlfilestore
 
 import "github.com/dracory/sb"
 
-func (st *Store) sqlTableCreate() string {
-	sql := sb.NewBuilder(sb.DatabaseDriverName(st.db)).
+func (st *Store) sqlTableCreate() (string, error) {
+	sql, err := sb.NewBuilder(sb.DatabaseDriverName(st.db)).
 		Table(st.tableName).
 		Column(sb.Column{
 			Name:       COLUMN_ID,
@@ -59,5 +59,5 @@ func (st *Store) sqlTableCreate() string {
 		}).
 		CreateIfNotExists()
 
-	return sql
+	return sql, err
 }

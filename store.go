@@ -27,13 +27,17 @@ type Store struct {
 
 // AutoMigrate auto migrate
 func (store *Store) AutoMigrate(ctx context.Context) error {
-	sql := store.sqlTableCreate()
+	sql, err := store.sqlTableCreate()
+
+	if err != nil {
+		return err
+	}
 
 	if sql == "" {
 		return errors.New("record table create sql is empty")
 	}
 
-	_, err := store.db.Exec(sql)
+	_, err = store.db.Exec(sql)
 
 	if err != nil {
 		return err
