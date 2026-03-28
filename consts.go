@@ -1,19 +1,31 @@
 package sqlfilestore
 
+// PATH_SEPARATOR is the path delimiter used throughout the file store.
 const PATH_SEPARATOR = "/"
+
+// TYPE_FILE is the record type value for files.
 const TYPE_FILE = "file"
+
+// TYPE_DIRECTORY is the record type value for directories.
 const TYPE_DIRECTORY = "directory"
+
+// ROOT_PATH is the path of the root directory.
 const ROOT_PATH = PATH_SEPARATOR
+
+// ROOT_ID is the ID of the root directory record.
 const ROOT_ID = "0"
 
-const COLUMN_ID = "id"
-const COLUMN_PARENT_ID = "parent_id"
-const COLUMN_NAME = "name"
-const COLUMN_PATH = "path"
-const COLUMN_TYPE = "type"
-const COLUMN_SIZE = "size"
-const COLUMN_EXTENSION = "extension"
-const COLUMN_CONTENTS = "contents"
-const COLUMN_CREATED_AT = "created_at"
-const COLUMN_UPDATED_AT = "updated_at"
-const COLUMN_DELETED_AT = "deleted_at"
+// Database column names used in the file records table.
+const (
+	COLUMN_ID         = "id"
+	COLUMN_PARENT_ID  = "parent_id"
+	COLUMN_NAME       = "name"
+	COLUMN_PATH       = "path"
+	COLUMN_TYPE       = "type"
+	COLUMN_SIZE       = "size"
+	COLUMN_EXTENSION  = "extension"
+	COLUMN_CONTENTS   = "contents"
+	COLUMN_CREATED_AT = "created_at"
+	COLUMN_UPDATED_AT = "updated_at"
+	COLUMN_DELETED_AT = "deleted_at"
+)

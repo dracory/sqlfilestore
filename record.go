@@ -11,12 +11,17 @@ import (
 
 // == CLASS ==================================================================
 
+// Record represents a file or directory entry in the hierarchical file store.
+// It embeds DataObject for field storage and provides typed accessors for
+// file-system attributes like path, size, contents, and timestamps.
 type Record struct {
 	dataobject.DataObject
 }
 
 // == CONSTRUCTORS ===========================================================
 
+// NewDirectory creates a new Record preconfigured as a directory.
+// It sets type to "directory", size to "0", and clears contents and extension.
 func NewDirectory() *Record {
 	record := NewRecord().
 		SetType(TYPE_DIRECTORY). // Directories are of TYPE_DIRECTORY
@@ -27,6 +32,8 @@ func NewDirectory() *Record {
 	return record
 }
 
+// NewFile creates a new Record preconfigured as a file.
+// It sets type to "file". Size, contents, and other fields must be set separately.
 func NewFile() *Record {
 	record := NewRecord().
 		SetType(TYPE_FILE) // Files are of TYPE_FILE
@@ -34,6 +41,8 @@ func NewFile() *Record {
 	return record
 }
 
+// NewRecord creates a new Record with default values.
+// It generates a unique ID and sets created_at, updated_at, and deleted_at timestamps.
 func NewRecord() *Record {
 	o := (&Record{}).
 		SetID(uid.HumanUid()).
@@ -50,6 +59,8 @@ func NewRecord() *Record {
 	return o
 }
 
+// NewRecordFromExistingData creates a Record from a map of existing data.
+// Used internally when hydrating records from database query results.
 func NewRecordFromExistingData(data map[string]string) *Record {
 	o := &Record{}
 	o.Hydrate(data)
@@ -58,10 +69,12 @@ func NewRecordFromExistingData(data map[string]string) *Record {
 
 // == HELPER METHODS =========================================================
 
+// IsDirectory returns true if this record represents a directory.
 func (o *Record) IsDirectory() bool {
 	return o.Type() == TYPE_DIRECTORY
 }
 
+// IsFile returns true if this record represents a file.
 func (o *Record) IsFile() bool {
 	return o.Type() == TYPE_FILE
 }

@@ -2,6 +2,10 @@ package sqlfilestore
 
 import "github.com/dracory/sb"
 
+// sqlTableCreate generates the SQL CREATE TABLE statement for the file records table.
+// It uses the sb (SQL Builder) package to create a dialect-appropriate statement.
+// The table includes columns for id, parent_id, type, name, contents, size, extension,
+// path, and timestamps (created_at, updated_at, deleted_at).
 func (st *Store) sqlTableCreate() (string, error) {
 	sql, err := sb.NewBuilder(sb.DatabaseDriverName(st.db)).
 		Table(st.tableName).

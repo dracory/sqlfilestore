@@ -1,10 +1,8 @@
 # SQL File Store
 
-<a href="https://gitpod.io/#https://github.com/gouniverse/sqlfilestore" style="float:right:"><img src="https://gitpod.io/button/open-in-gitpod.svg" alt="Open in Gitpod" loading="lazy"></a>
-
-![tests](https://github.com/gouniverse/sqlfilestore/workflows/tests/badge.svg)
-[![Go Report Card](https://goreportcard.com/badge/github.com/gouniverse/sqlfilestore)](https://goreportcard.com/report/github.com/gouniverse/sqlfilestore)
-[![PkgGoDev](https://pkg.go.dev/badge/github.com/gouniverse/sqlfilestore)](https://pkg.go.dev/github.com/gouniverse/sqlfilestore)
+![tests](https://github.com/dracory/sqlfilestore/workflows/tests/badge.svg)
+[![Go Report Card](https://goreportcard.com/badge/github.com/dracory/sqlfilestore)](https://goreportcard.com/report/github.com/dracory/sqlfilestore)
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/dracory/sqlfilestore)](https://pkg.go.dev/github.com/dracory/sqlfilestore)
 
 SQL File Store persists a hierarchical file-system-like structure in a relational database. It handles record creation, querying, soft deletion, and path recalculation for nested directories and files, while keeping a root directory available out of the box.
 
@@ -35,7 +33,10 @@ import (
 )
 
 func main() {
-    db, _ := sql.Open("sqlite", ":memory:?parseTime=true")
+    db, err := sql.Open("sqlite", ":memory:?parseTime=true")
+    if err != nil {
+        panic(err)
+    }
 
     store, err := sqlfilestore.NewStore(sqlfilestore.NewStoreOptions{
         DB:                 db,
