@@ -446,6 +446,9 @@ func (store *Store) recordQuery(options RecordQueryOptions) *goqu.SelectDataset 
 }
 
 func (store *Store) fixPath(path string) string {
+	// Normalize backslashes to forward slashes (Windows compatibility)
+	path = strings.ReplaceAll(path, "\\", PATH_SEPARATOR)
+
 	if strings.HasPrefix(path, PATH_SEPARATOR) {
 		return path
 	}
