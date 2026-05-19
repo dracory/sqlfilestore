@@ -65,3 +65,14 @@ func (st *Store) sqlTableCreate() (string, error) {
 
 	return sql, err
 }
+
+// sqlTableDrop generates the SQL DROP TABLE statement for the file records table.
+func (st *Store) sqlTableDrop() (string, error) {
+	sql, err := sb.NewBuilder(sb.DatabaseDriverName(st.db)).
+		Table(st.tableName).
+		Drop()
+	if err != nil {
+		return "", err
+	}
+	return sql, nil
+}

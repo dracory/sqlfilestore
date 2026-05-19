@@ -29,10 +29,15 @@ type Store struct {
 	debugEnabled       bool
 }
 
-// AutoMigrate creates the database table if it doesn't exist and ensures
+// MigrateUp creates the database table if it doesn't exist and ensures
 // a root directory record is present. It runs automatically if AutomigrateEnabled
 // is set to true in NewStoreOptions.
-func (store *Store) AutoMigrate(ctx context.Context) error {
+func (store *Store) MigrateUp(ctx context.Context, tx ...*sql.Tx) error {
+	var txToUse *sql.Tx
+	if len(tx) > 0 {
+		txToUse = tx[0]
+	}
+
 	sql, err := store.sqlTableCreate()
 
 	if err != nil {
@@ -43,10 +48,15 @@ func (store *Store) AutoMigrate(ctx context.Context) error {
 		return errors.New("record table create sql is empty")
 	}
 
-	_, err = store.db.Exec(sql)
+	var errExec error
+	if txToUse != nil {
+		_, errExec = txToUse.ExecContext(ctx, sql)
+	} else {
+		_, errExec = store.db.ExecContext(ctx, sql)
+	}
 
-	if err != nil {
-		return err
+	if errExec != nil {
+		return errExec
 	}
 
 	recordCount, err := store.RecordCount(ctx, RecordQueryOptions{
@@ -71,6 +81,32 @@ func (store *Store) AutoMigrate(ctx context.Context) error {
 
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// MigrateDown drops the sqlfilestore table
+func (store *Store) MigrateDown(ctx context.Context, tx ...*sql.Tx) error {
+	var txToUse *sql.Tx
+	if len(tx) > 0 {
+		txToUse = tx[0]
+	}
+
+	sql, err := store.sqlTableDrop()
+	if err != nil {
+		return err
+	}
+
+	var errExec error
+	if txToUse != nil {
+		_, errExec = txToUse.ExecContext(ctx, sql)
+	} else {
+		_, errExec = store.db.ExecContext(ctx, sql)
+	}
+
+	if errExec != nil {
+		return errExec
 	}
 
 	return nil
