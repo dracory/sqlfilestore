@@ -3,17 +3,13 @@ package sqlfilestore
 import (
 	"context"
 	"database/sql"
-	"os"
-	"strings"
 	"testing"
 
-	"github.com/dracory/sb"
 	"github.com/spf13/cast"
 	_ "modernc.org/sqlite"
 )
 
 func initDB(filepath string) *sql.DB {
-	os.Remove(filepath) // remove database
 	dsn := filepath + "?parseTime=true"
 	db, err := sql.Open("sqlite", dsn)
 
@@ -217,7 +213,7 @@ func TestStoreFileSoftDelete(t *testing.T) {
 		t.Fatal("unexpected error:", err)
 	}
 
-	if file.DeletedAt() != sb.NULL_DATETIME {
+	if file.DeletedAt() != MAX_DATETIME {
 		t.Fatal("File MUST NOT be soft deleted")
 	}
 
@@ -245,8 +241,8 @@ func TestStoreFileSoftDelete(t *testing.T) {
 		t.Fatal("File MUST be soft deleted")
 	}
 
-	if strings.Contains(fileFindWithDeleted[0].DeletedAt(), sb.NULL_DATETIME) {
-		t.Fatal("File MUST be soft deleted", file.DeletedAt())
+	if fileFindWithDeleted[0].DeletedAt() == MAX_DATETIME {
+		t.Fatal("File MUST be soft deleted", fileFindWithDeleted[0].DeletedAt())
 	}
 }
 

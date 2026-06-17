@@ -2,8 +2,6 @@ package sqlfilestore
 
 import (
 	"testing"
-
-	"github.com/dracory/sb"
 )
 
 func TestNewRecordSetsDefaultValues(t *testing.T) {
@@ -25,8 +23,8 @@ func TestNewRecordSetsDefaultValues(t *testing.T) {
 		t.Fatal("expected updated_at to be set")
 	}
 
-	if record.DeletedAt() != sb.NULL_DATETIME {
-		t.Fatalf("expected deleted_at to default to %q", sb.NULL_DATETIME)
+	if record.DeletedAt() != MAX_DATETIME {
+		t.Fatalf("expected deleted_at to default to %q", MAX_DATETIME)
 	}
 
 	if record.IsDirectory() {
@@ -131,17 +129,17 @@ func TestRecordSettersAndGetters(t *testing.T) {
 
 func TestNewRecordFromExistingDataHydratesAllFields(t *testing.T) {
 	data := map[string]string{
-		"id":         "custom-id",
-		"path":       "/dir/file.txt",
-		"type":       TYPE_FILE,
-		"parent_id":  "parent",
-		"name":       "file.txt",
-		"contents":   "payload",
-		"size":       "42",
-		"extension":  "txt",
-		"created_at": "2024-01-01 00:00:00",
-		"updated_at": "2024-01-02 00:00:00",
-		"deleted_at": "2024-01-03 00:00:00",
+		"id":              "custom-id",
+		"path":            "/dir/file.txt",
+		"type":            TYPE_FILE,
+		"parent_id":       "parent",
+		"name":            "file.txt",
+		"contents":        "payload",
+		"size":            "42",
+		"extension":       "txt",
+		"created_at":      "2024-01-01 00:00:00",
+		"updated_at":      "2024-01-02 00:00:00",
+		"soft_deleted_at": "2024-01-03 00:00:00",
 	}
 
 	record := NewRecordFromExistingData(data)
@@ -186,7 +184,7 @@ func TestNewRecordFromExistingDataHydratesAllFields(t *testing.T) {
 		t.Fatalf("expected updated_at %q, got %q", data["updated_at"], record.UpdatedAt())
 	}
 
-	if record.DeletedAt() != data["deleted_at"] {
-		t.Fatalf("expected deleted_at %q, got %q", data["deleted_at"], record.DeletedAt())
+	if record.DeletedAt() != data["soft_deleted_at"] {
+		t.Fatalf("expected deleted_at %q, got %q", data["soft_deleted_at"], record.DeletedAt())
 	}
 }
