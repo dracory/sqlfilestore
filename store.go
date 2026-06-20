@@ -351,7 +351,8 @@ func (store *Store) RecordUpdate(ctx context.Context, record *Record) error {
 }
 
 func (store *Store) buildQuery(options RecordQueryOptions) contractsorm.Query {
-	q := store.db.Query()
+	// Use Model() to enable neat's automatic soft delete handling via SoftDeletesMaxDate
+	q := store.db.Query().Model(&Record{})
 
 	if options.ID != "" {
 		q = q.Where(COLUMN_ID+" = ?", options.ID)
@@ -416,8 +417,6 @@ func (store *Store) buildQuery(options RecordQueryOptions) contractsorm.Query {
 
 	if options.WithSoftDeleted {
 		q = q.WithSoftDeleted()
-	} else {
-		q = q.Where(COLUMN_SOFT_DELETED_AT+" = ?", carbon.Parse(MAX_DATETIME, carbon.UTC).StdTime())
 	}
 
 	return q
