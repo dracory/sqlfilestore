@@ -2,6 +2,7 @@ package sqlfilestore
 
 import (
 	"strings"
+	"time"
 
 	"github.com/dracory/neat/database/orm"
 	"github.com/dracory/neat/database/soft_delete"
@@ -21,8 +22,8 @@ type Record struct {
 	ExtensionField string `db:"extension"`
 	ContentsField  string `db:"contents"`
 
-	CreatedAtField orm.CreatedAt
-	UpdatedAtField orm.UpdatedAt
+	CreatedAtField time.Time `db:"created_at"`
+	UpdatedAtField time.Time `db:"updated_at"`
 	soft_delete.SoftDeletesMaxDate
 }
 
@@ -111,12 +112,12 @@ func (o *Record) IsSoftDeleted() bool {
 
 // GetCreatedAtCarbon returns the created at time as a carbon object.
 func (o *Record) GetCreatedAtCarbon() *carbon.Carbon {
-	return carbon.CreateFromStdTime(o.CreatedAtField.CreatedAt)
+	return carbon.CreateFromStdTime(o.CreatedAtField)
 }
 
 // GetUpdatedAtCarbon returns the updated at time as a carbon object.
 func (o *Record) GetUpdatedAtCarbon() *carbon.Carbon {
-	return carbon.CreateFromStdTime(o.UpdatedAtField.UpdatedAt)
+	return carbon.CreateFromStdTime(o.UpdatedAtField)
 }
 
 // GetDeletedAtCarbon returns the soft deleted at time as a carbon object.
@@ -137,10 +138,10 @@ func (o *Record) SetContents(fileContents string) *Record {
 
 // CreatedAt returns the created at time of the record.
 func (o *Record) CreatedAt() string {
-	if o.CreatedAtField.CreatedAt.IsZero() {
+	if o.CreatedAtField.IsZero() {
 		return ""
 	}
-	return carbon.CreateFromStdTime(o.CreatedAtField.CreatedAt).ToDateTimeString()
+	return carbon.CreateFromStdTime(o.CreatedAtField).ToDateTimeString()
 }
 
 // SetCreatedAt sets the created at time of the record.
@@ -148,7 +149,7 @@ func (o *Record) SetCreatedAt(createdAt string) *Record {
 	if createdAt == "" {
 		return o
 	}
-	o.CreatedAtField.CreatedAt = carbon.Parse(createdAt, carbon.UTC).StdTime()
+	o.CreatedAtField = carbon.Parse(createdAt, carbon.UTC).StdTime()
 	return o
 }
 
@@ -252,10 +253,10 @@ func (o *Record) SetType(fileType string) *Record {
 
 // UpdatedAt returns the updated at time of the record.
 func (o *Record) UpdatedAt() string {
-	if o.UpdatedAtField.UpdatedAt.IsZero() {
+	if o.UpdatedAtField.IsZero() {
 		return ""
 	}
-	return carbon.CreateFromStdTime(o.UpdatedAtField.UpdatedAt).ToDateTimeString()
+	return carbon.CreateFromStdTime(o.UpdatedAtField).ToDateTimeString()
 }
 
 // SetUpdatedAt sets the updated at time of the record.
@@ -263,6 +264,6 @@ func (o *Record) SetUpdatedAt(updatedAt string) *Record {
 	if updatedAt == "" {
 		return o
 	}
-	o.UpdatedAtField.UpdatedAt = carbon.Parse(updatedAt, carbon.UTC).StdTime()
+	o.UpdatedAtField = carbon.Parse(updatedAt, carbon.UTC).StdTime()
 	return o
 }
