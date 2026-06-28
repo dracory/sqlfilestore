@@ -291,8 +291,8 @@ func (store *Store) RecordList(ctx context.Context, options RecordQueryOptions) 
 		rec.SetSize(r.Size)
 		rec.SetExtension(r.Extension)
 		rec.SetContents(r.Contents)
-		rec.CreatedAtField.CreatedAt = r.CreatedAt
-		rec.UpdatedAtField.UpdatedAt = r.UpdatedAt
+		rec.CreatedAtField = r.CreatedAt
+		rec.UpdatedAtField = r.UpdatedAt
 		rec.SoftDeletesMaxDate.SoftDeletedAt = r.SoftDeletedAt
 		list = append(list, *rec)
 	}
