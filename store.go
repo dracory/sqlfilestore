@@ -34,7 +34,7 @@ func (store *Store) MigrateUp(ctx context.Context, tx ...*sql.Tx) error {
 		table.String(COLUMN_PARENT_ID, 40)
 		table.String(COLUMN_TYPE, 10)
 		table.String(COLUMN_NAME, 100)
-		table.Text(COLUMN_CONTENTS)
+		table.LongText(COLUMN_CONTENTS)
 		table.String(COLUMN_SIZE, 20)
 		table.String(COLUMN_EXTENSION, 12)
 		table.String(COLUMN_PATH, 2048)
