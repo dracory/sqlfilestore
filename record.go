@@ -3,16 +3,16 @@ package sqlfilestore
 import (
 	"strings"
 	"time"
+	"uuid"
 
 	"github.com/dracory/neat/database/orm"
 	"github.com/dracory/neat/database/soft_delete"
-	neatuid "github.com/dracory/neat/support/uid"
 	"github.com/dromara/carbon/v2"
 )
 
 // Record represents a file or directory entry in the hierarchical file store.
 type Record struct {
-	orm.ShortID
+	orm.StringID
 
 	ParentIDField  string `db:"parent_id"`
 	NameField      string `db:"name"`
@@ -49,7 +49,7 @@ func NewFile() *Record {
 // NewRecord creates a new Record with default values.
 func NewRecord() *Record {
 	o := &Record{}
-	o.SetID(neatuid.GenerateShortID())
+	o.SetID(uuid.NewV7().String())
 	o.SetCreatedAt(carbon.Now(carbon.UTC).ToDateTimeString(carbon.UTC))
 	o.SetUpdatedAt(carbon.Now(carbon.UTC).ToDateTimeString(carbon.UTC))
 	o.SetDeletedAt(MAX_DATETIME)
@@ -183,12 +183,12 @@ func (o *Record) SetExtension(extension string) *Record {
 
 // ID returns the id of the record.
 func (o *Record) ID() string {
-	return o.ShortID.ID
+	return o.StringID.ID
 }
 
 // SetID sets the id of the record.
 func (o *Record) SetID(id string) *Record {
-	o.ShortID.ID = id
+	o.StringID.ID = id
 	return o
 }
 
